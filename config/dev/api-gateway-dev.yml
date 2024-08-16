@@ -1,23 +1,28 @@
 server:
-  port: '8062'
+  port: 8062
   ssl:
     key-store-password: sharad
     key-store-type: PKCS12
     key-alias: myapp
     key-store: classpath:keystore.p12
+
 spring:
   cloud:
     gateway:
-      routes[0]:
-        id: user-service
-        filters[0]: StripPrefix=1
-        uri: lb://user-service
-        predicates[0]: Path=/user-service/**
-      routes[1]:
-        id: product-service
-        predicates[0]: Path=/product-service/**
-        filters[0]: StripPrefix=1
-        uri: lb://product-service
+      routes:
+        - id: user-service
+          filters:
+            - StripPrefix=1
+          uri: lb://user-service
+          predicates:
+            - Path=/user-service/**
+        - id: product-service
+          filters:
+            - StripPrefix=1
+          uri: lb://product-service
+          predicates:
+            - Path=/product-service/**
+
 eureka:
   client:
     service-url:
