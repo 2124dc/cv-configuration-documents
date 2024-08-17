@@ -1,0 +1,49 @@
+Common HTTP Status Codes by Request Type
+GET:
+
+200 OK: The request was successful, and the server returned the requested resource.
+404 Not Found: The requested resource could not be found.
+401 Unauthorized: Authentication is required and has failed or has not yet been provided.
+403 Forbidden: The server understood the request but refuses to authorize it.
+
+
+POST:
+
+201 Created: The request was successful, and a new resource was created.
+400 Bad Request: The request was malformed or invalid.
+401 Unauthorized: Authentication is required and has failed or has not yet been provided.
+403 Forbidden: The server understood the request but refuses to authorize it.
+409 Conflict: The request could not be processed because of conflict in the request.
+
+
+PUT:
+
+200 OK: The request was successful, and the resource was updated.
+204 No Content: The request was successful, but there is no content to return.
+400 Bad Request: The request was malformed or invalid.
+401 Unauthorized: Authentication is required and has failed or has not yet been provided.
+403 Forbidden: The server understood the request but refuses to authorize it.
+404 Not Found: The resource to be updated was not found.
+
+
+DELETE:
+
+200 OK: The request was successful, and the resource was deleted.
+204 No Content: The request was successful, and no content is returned.
+400 Bad Request: The request was malformed or invalid.
+401 Unauthorized: Authentication is required and has failed or has not yet been provided.
+403 Forbidden: The server understood the request but refuses to authorize it.
+404 Not Found: The resource to be deleted was not found.
+
+
+PATCH:
+
+200 OK: The request was successful, and the resource was updated.
+204 No Content: The request was successful, but there is no content to return.
+400 Bad Request: The request was malformed or invalid.
+401 Unauthorized: Authentication is required and has failed or has not yet been provided.
+403 Forbidden: The server understood the request but refuses to authorize it.
+404 Not Found: The resource to be updated was not found.
+
+
+These are general mappings, and the specific status codes used can vary depending on the API design and implementation.
