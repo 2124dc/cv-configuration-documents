@@ -1,0 +1,41 @@
+openapi: 3.0.0
+info:
+  version: 1.0.0
+  title: User API
+  description: API for managing users
+servers:
+  - url: https://localhost:8062/ams
+    description: Local server
+paths:
+  /admin:
+    get:
+      summary: Get Admin Details
+      operationId: getAdminDetails
+      responses:
+        '200':
+          description: Admin details
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/Admin'
+
+components:
+  schemas:
+    Admin:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The user ID
+        name:
+          type: string
+          description: The user's name
+        email:
+          type: string
+          description: The user's email address
+        mobile:
+          type: string
+          description: The user's mobile number
+        password:
+          type: string
+          description: password

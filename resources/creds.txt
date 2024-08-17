@@ -1,0 +1,11 @@
+mongo db creds
+sharadchavhan001 - EV45YD1ezvHLxgmV
+
+Your current IP address (106.213.80.135) has been added to enable local connectivity. Add another later in 
+Network Access.
+
+
+
+git 
+username- sharadchavhan001
+password- ATBBZYgwJNFwpZvDWydYvVz8GpHeBFE9E729

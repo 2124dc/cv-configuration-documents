@@ -1,0 +1,44 @@
+openapi: 3.0.0
+info:
+  version: 1.0.0
+  title: User API
+  description: API for managing users
+servers:
+  - url: https://localhost:8062/ams
+    description: Local server
+paths:
+  /admin/api/test:
+    get:
+      summary: Test API
+      operationId: testApi
+      responses:
+        '200':
+          description: A simple test response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Admin micro service is working!"
+components:
+  schemas:
+    Admin:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The user ID
+        name:
+          type: string
+          description: The user's name
+        email:
+          type: string
+          description: The user's email address
+        mobile:
+          type: string
+          description: The user's mobile number
+        password:
+          type: string
+          description: password
