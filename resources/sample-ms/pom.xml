@@ -11,9 +11,9 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.app</groupId>
-    <artifactId>app-cv-micro-service</artifactId>
+    <artifactId>app-cv-hotel-micro-service</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>app-cv-micro-service</name>
+    <name>app-cv-hotel-micro-service</name>
     <description>first swagger then business logic</description>
     <url/>
     <licenses>

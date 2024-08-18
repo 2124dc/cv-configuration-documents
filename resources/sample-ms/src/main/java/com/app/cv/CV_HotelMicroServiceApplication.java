@@ -6,11 +6,11 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 
 @SpringBootApplication
 @EnableDiscoveryClient
-public class CV_AdminMicroServiceApplication {
+public class CV_HotelMicroServiceApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(CV_AdminMicroServiceApplication.class, args);
-        System.out.println("CV_AdminMicroServiceApplication Successfully started...!!!");
+        SpringApplication.run(CV_HotelMicroServiceApplication.class, args);
+        System.out.println("CV_HotelMicroServiceApplication Successfully started...!!!");
     }
 
 }
