@@ -1,0 +1,9 @@
+git repo : https://sharadchavhan001@bitbucket.org/java-by-2124/cv-config-server.git
+
+ # Step 3: Define Variables
+- SSH_HOST="103.168.18.176"  # VPS IP address
+- SSH_USER="root"            # SSH user
+- REMOTE_DIR="/system/projects/java/chavdar_vishranti/jars/config-server"  # Remote directory on VPS
+
+
+

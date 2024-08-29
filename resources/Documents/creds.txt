@@ -1,0 +1,12 @@
+mongo db creds
+sharadchavhan001 - EV45YD1ezvHLxgmV
+
+bitbuckt 
+username- sharadchavhan001
+password- ATBBZYgwJNFwpZvDWydYvVz8GpHeBFE9E729
+
+
+
+local jenkins
+2124/SHarad@2124
+

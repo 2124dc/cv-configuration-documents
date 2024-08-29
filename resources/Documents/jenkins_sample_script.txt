@@ -1,0 +1,82 @@
+pipeline {
+    agent any
+
+    // tools {
+    //     maven 'Maven 3.8.8'  // Use the correct Maven version name configured in Jenkins
+    // }
+
+    environment {
+        SSH_HOST = '103.168.18.176'
+        SSH_USER = 'root'
+        REMOTE_DIR = '/system/projects/java/chavdar_vishranti/jars/config-server'
+        SSH_KEY = credentials('ssh-private-key-id')  // Jenkins credential ID for SSH key
+    }
+
+    stages {
+        stage('Build') {
+            steps {
+                script {
+                    // Get some code from a GitHub repository
+                    git 'https://github.com/jglick/simple-maven-project-with-tests.git'
+
+                    // Run Maven on a Unix agent.
+                    sh "mvn -Dmaven.test.failure.ignore=true clean package"
+                }
+            }
+            post {
+                success {
+                    // Record test results and archive the jar file.
+                    junit '**/target/surefire-reports/TEST-*.xml'
+                    archiveArtifacts 'target/*.jar'
+                }
+            }
+        }
+        stage('Security Scan') {
+            steps {
+                script {
+                    // Run a security scan for sensitive data.
+                    // Replace with actual security tool and commands as needed.
+                    sh 'git secrets --scan'
+                }
+            }
+        }
+        stage('Deploy to VPS') {
+            steps {
+                script {
+                    // Install SSH and SCP
+                    sh '''
+                    apt-get update
+                    apt-get install -y openssh-client
+                    '''
+                    
+                    // Define Variables
+                    def jarFile = sh(script: 'find target -name "*.jar" | head -n 1', returnStdout: true).trim()
+                    
+                    // Set up SSH key
+                    sh '''
+                    mkdir -p ~/.ssh
+                    echo "${SSH_KEY}" > ~/.ssh/id_rsa
+                    chmod 600 ~/.ssh/id_rsa
+                    '''
+                    
+                    // Test SSH connection
+                    sh "ssh -o StrictHostKeyChecking=no ${SSH_USER}@${SSH_HOST} 'echo SSH connection successful'"
+                    
+                    // Copy JAR file to VPS
+                    sh "scp -o StrictHostKeyChecking=no ${jarFile} ${SSH_USER}@${SSH_HOST}:${REMOTE_DIR}"
+                    echo 'Copied JAR file to VPS successfully!'
+                    
+                    // Run the JAR on the VPS
+                    def jarFileName = jarFile.split('/').last()
+                    sh "ssh -o StrictHostKeyChecking=no ${SSH_USER}@${SSH_HOST} 'nohup java -jar ${REMOTE_DIR}/${jarFileName} > /dev/null 2>&1 &'"
+                    echo 'Config Server started successfully!'
+                }
+            }
+        }
+    }
+    post {
+        always {
+            cleanWs()  // Clean workspace after all stages are completed
+        }
+    }
+}

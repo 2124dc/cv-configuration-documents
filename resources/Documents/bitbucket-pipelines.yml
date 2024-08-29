@@ -1,0 +1,64 @@
+image: maven:3.8.8
+
+pipelines:
+  default:
+    - parallel:
+        - step:
+            name: Build and Test
+            caches:
+              - maven
+            script:
+              # Build and test the Java project using Maven.
+              - mvn -B verify --file pom.xml
+            after-script:
+              # Collect checkstyle results, if any, and convert to Bitbucket Code Insights.
+              - pipe: atlassian/checkstyle-report:0.3.0
+
+        - step:
+            name: Security Scan
+            script:
+              # Run a security scan for sensitive data.
+              # See more security tools at https://bitbucket.org/product/features/pipelines/integrations?&category=security
+              - pipe: atlassian/git-secrets-scan:0.5.1
+
+    - step:
+        name: Deploy to VPS
+        deployment: production  # Optional: Set this to your desired deployment environment
+        script:
+          # Step 1: Install SSH and SCP
+          - echo "Installing SSH and SCP..."
+          # Update package lists and install openssh-client
+          - apt-get update && apt-get install -y openssh-client
+
+          # Step 2: Build the Project
+          - echo "Starting build and deployment..."
+          - mvn clean install
+
+          # Step 3: Define Variables
+          - SSH_HOST="103.168.18.176"  # VPS IP address
+          - SSH_USER="root"            # SSH user
+          - REMOTE_DIR="/system/projects/java/chavdar_vishranti/jars/config-server"  # Remote directory on VPS
+
+          # Step 4: Find the JAR File
+          - JAR_FILE=$(find target -name "*.jar" | head -n 1)  # Dynamically find the JAR file
+
+          # Step 5: Set Up SSH Key
+          - echo "Setting up SSH key..."
+          - mkdir -p ~/.ssh
+          - echo "$SSH_KEY" > ~/.ssh/id_rsa  # Place your SSH key into the file
+          - chmod 600 ~/.ssh/id_rsa  # Set correct permissions for the SSH key
+
+          # Step 6: Test SSH Connection
+          - echo "Testing SSH connection..."
+          - ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST "echo 'SSH connection successful'"
+
+          # Step 7: Copy JAR File to VPS
+          - echo "Copying JAR file to VPS..."
+          - scp -o StrictHostKeyChecking=no $JAR_FILE $SSH_USER@$SSH_HOST:$REMOTE_DIR
+          - echo "Copied JAR file to VPS sucessfully...!!!"
+
+          # Step 8: Run the JAR on the VPS
+          - echo "Starting Eureka Server on VPS..."
+          - ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST "nohup java -jar $REMOTE_DIR/$(basename $JAR_FILE) > /dev/null 2>&1 &"
+          - echo "Config Server start sucessfully ...!!!"
+
