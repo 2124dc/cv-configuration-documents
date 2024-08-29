@@ -1,82 +1,100 @@
 pipeline {
-    agent any
-
-    // tools {
-    //     maven 'Maven 3.8.8'  // Use the correct Maven version name configured in Jenkins
-    // }
-
-    environment {
-        SSH_HOST = '103.168.18.176'
-        SSH_USER = 'root'
-        REMOTE_DIR = '/system/projects/java/chavdar_vishranti/jars/config-server'
-        SSH_KEY = credentials('ssh-private-key-id')  // Jenkins credential ID for SSH key
-    }
+    agent any  // Use any available Jenkins agent
 
     stages {
-        stage('Build') {
+        stage('Cloning repo from bitbucket...'){
+            steps{
+                script{
+                    git changelog: false, credentialsId: 'bitbucket_ip', poll: false, url: 'https://sharadchavhan001:ATBBZYgwJNFwpZvDWydYvVz8GpHeBFE9E729@bitbucket.org/java-by-2124/cv-config-server.git', branch: 'main'
+                    echo 'workspace data sucessfully retrieved ...!!!'
+                }
+            }
+        }
+        
+        stage('Build and Test') {
             steps {
                 script {
-                    // Get some code from a GitHub repository
-                    git 'https://github.com/jglick/simple-maven-project-with-tests.git'
+                    // Navigate to the 'cv-config-server' directory within the workspace
+                    // dir('cv-config-server') {
+                        echo 'Building the project...'
+                        bat 'mvn clean install'
 
-                    // Run Maven on a Unix agent.
-                    sh "mvn -Dmaven.test.failure.ignore=true clean package"
-                }
-            }
-            post {
-                success {
-                    // Record test results and archive the jar file.
-                    junit '**/target/surefire-reports/TEST-*.xml'
-                    archiveArtifacts 'target/*.jar'
+                        // Running tests
+                        echo 'Running tests...'
+                        bat 'mvn test'
+                    // }
                 }
             }
         }
-        stage('Security Scan') {
-            steps {
-                script {
-                    // Run a security scan for sensitive data.
-                    // Replace with actual security tool and commands as needed.
-                    sh 'git secrets --scan'
-                }
-            }
-        }
+        
+        // stage('Security Scan') {
+        //     steps {
+        //         script {
+        //             // Run a security scan for sensitive data
+        //             echo 'Running security scan...'
+                    
+        //             // Example of running a security scan using a hypothetical tool
+        //             // Adjust the command according to your specific security tool
+        //             bat 'git-secrets --scan' // Replace with your actual security scan command
+                    
+        //             // If using a specific security tool that requires installation, make sure it's available in the PATH or install it beforehand.
+        //         }
+        //     }
+        // }
+        
         stage('Deploy to VPS') {
             steps {
                 script {
-                    // Install SSH and SCP
-                    sh '''
-                    apt-get update
-                    apt-get install -y openssh-client
-                    '''
-                    
-                    // Define Variables
-                    def jarFile = sh(script: 'find target -name "*.jar" | head -n 1', returnStdout: true).trim()
-                    
+                    // Set environment variables for SSH and deployment
+                    def sshHost = "103.168.18.176"
+                    def sshUser = "root"
+                    def remoteDir = "/system/projects/java/chavdar_vishranti/jars/config-server"
+                    def sshKey = credentials('ssh-private-key-id') // Assuming you have a Jenkins credential for the SSH key
+
+                    // // Install SSH and SCP tools
+                    // echo 'Installing SSH and SCP...'
+                    // bat 'apt-get update && apt-get install -y openssh-client'
+
+                    // Build the project
+                    echo 'Starting build and deployment...'
+                    bat 'mvn clean install'
+
+                    // Find the JAR file
+                    def jarFile = bat(script: 'for %%f in (target/*.jar) do @echo %%f', returnStdout: true).trim()
+                    echo "Found JAR file: ${jarFile}"
+
                     // Set up SSH key
-                    sh '''
-                    mkdir -p ~/.ssh
-                    echo "${SSH_KEY}" > ~/.ssh/id_rsa
-                    chmod 600 ~/.ssh/id_rsa
-                    '''
-                    
+                    echo 'Setting up SSH key...'
+                    writeFile file: 'id_rsa', text: sshKey
+                    bat 'chmod 600 id_rsa'
+                    bat 'move id_rsa ~/.ssh/id_rsa'
+
                     // Test SSH connection
-                    sh "ssh -o StrictHostKeyChecking=no ${SSH_USER}@${SSH_HOST} 'echo SSH connection successful'"
-                    
+                    echo 'Testing SSH connection...'
+                    bat "ssh -o StrictHostKeyChecking=no ${sshUser}@${sshHost} \"echo 'SSH connection successful'\""
+
                     // Copy JAR file to VPS
-                    sh "scp -o StrictHostKeyChecking=no ${jarFile} ${SSH_USER}@${SSH_HOST}:${REMOTE_DIR}"
-                    echo 'Copied JAR file to VPS successfully!'
-                    
+                    echo 'Copying JAR file to VPS...'
+                    bat "scp -o StrictHostKeyChecking=no ${jarFile} ${sshUser}@${sshHost}:${remoteDir}"
+                    echo 'Copied JAR file to VPS successfully...!!!'
+
                     // Run the JAR on the VPS
-                    def jarFileName = jarFile.split('/').last()
-                    sh "ssh -o StrictHostKeyChecking=no ${SSH_USER}@${SSH_HOST} 'nohup java -jar ${REMOTE_DIR}/${jarFileName} > /dev/null 2>&1 &'"
-                    echo 'Config Server started successfully!'
+                    echo 'Starting Eureka Server on VPS...'
+                    bat """
+                        ssh -o StrictHostKeyChecking=no ${sshUser}@${sshHost} "nohup java -jar ${remoteDir}/\$(basename ${jarFile}) > /dev/null 2>&1 &"
+                    """                    
+                    echo 'Config Server started successfully ...!!!'
                 }
             }
         }
+        
+        
     }
+
     post {
         always {
-            cleanWs()  // Clean workspace after all stages are completed
+            // Clean workspace after the build
+            cleanWs()
         }
     }
 }
