@@ -1,0 +1,50 @@
+pipeline {
+    agent any
+
+    environment {
+        // Define environment variables if needed
+        VPS_USER = 'your_vps_user' // Replace with your VPS username
+        VPS_HOST = 'your_vps_host' // Replace with your VPS hostname or IP
+        VPS_APP_DIR = '/path/to/deploy/app' // Replace with your deployment directory on VPS
+    }
+
+    stages {
+        stage('Clone Repository') {
+            steps {
+                git branch: 'main', url: 'https://your-bitbucket-repo-url.git'
+            }
+        }
+
+        stage('Build') {
+            steps {
+                sh 'mvn clean package -DskipTests' // Adjust as needed for your project
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                script {
+                    def jarFile = sh(script: "ls target/*.jar", returnStdout: true).trim()
+                    def deployCmd = """
+                        ssh -o StrictHostKeyChecking=no ${VPS_USER}@${VPS_HOST} << 'ENDSSH'
+                        pkill -f ${jarFile}
+                        rm -f ${VPS_APP_DIR}/*.jar
+                        cp ${WORKSPACE}/target/*.jar ${VPS_APP_DIR}/
+                        nohup java -jar ${VPS_APP_DIR}/$(basename ${jarFile}) > ${VPS_APP_DIR}/app.log 2>&1 &
+                        ENDSSH
+                    """
+                    sh deployCmd
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Deployment completed successfully!'
+        }
+        failure {
+            echo 'Deployment failed.'
+        }
+    }
+}

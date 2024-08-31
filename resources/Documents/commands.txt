@@ -1,0 +1,21 @@
+
+run jar file on VPS
+--->>> nohup java -jar /system/projects/java/chavdar_vishranti/jars/config-server/config-server-0.0.1-SNAPSHOT.jar > /system/projects/java/chavdar_vishranti/jars/config-server/app.log 2>&1 &
+
+run form local
+--->>> ssh -i C:/Users/sdc21/.ssh/id_rsa root@103.168.18.176 "nohup java -jar /system/projects/java/chavdar_vishranti/jars/config-server/config-server-0.0.1-SNAPSHOT.jar > /system/projects/java/chavdar_vishranti/jars/config-server/app.log 2>&1 & echo 'New JAR file deployed and running...!!!'"
+
+
+After running the command, check the app.log file for any error messages or logs:
+--->>> tail -f /system/projects/java/chavdar_vishranti/jars/config-server/app.log
+
+Stopping a Running JAR File
+--->>> ps aux | grep java
+
+Alternatively, if you know the JAR file name, you can use pgrep:
+--->>> pgrep -f config-server-0.0.1-SNAPSHOT.jar
+
+Kill the Process:
+    Once you have the PID, you can stop the process using the kill command:
+-->>> kill <PID>
+

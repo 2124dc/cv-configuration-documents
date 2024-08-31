@@ -1,100 +1,81 @@
 pipeline {
-    agent any  // Use any available Jenkins agent
+    agent any
+
+    environment {
+        // Define environment variables if needed
+        VPS_USER = 'root' // Replace with your VPS username
+        VPS_HOST = '103.168.18.176' // Replace with your VPS hostname or IP
+        VPS_APP_DIR = '/system/projects/java/chavdar_vishranti/jars/config-server'
+        SSH_KEY = 'C:/Users/sdc21/.ssh/id_rsa'
+        JAR_FILE = 'config-server-0.0.1-SNAPSHOT.jar' // Replace with your actual JAR file name
+    }
 
     stages {
-        stage('Cloning repo from bitbucket...'){
-            steps{
+        stage('Clone Repository') {
+			steps{
                 script{
                     git changelog: false, credentialsId: 'bitbucket_ip', poll: false, url: 'https://sharadchavhan001:ATBBZYgwJNFwpZvDWydYvVz8GpHeBFE9E729@bitbucket.org/java-by-2124/cv-config-server.git', branch: 'main'
-                    echo 'workspace data sucessfully retrieved ...!!!'
+                    echo '============================== workspace data sucessfully retrieved ...!!! =============================='
                 }
             }
         }
-        
-        stage('Build and Test') {
-            steps {
-                script {
-                    // Navigate to the 'cv-config-server' directory within the workspace
-                    // dir('cv-config-server') {
-                        echo 'Building the project...'
-                        bat 'mvn clean install'
 
-                        // Running tests
-                        echo 'Running tests...'
-                        bat 'mvn test'
-                    // }
-                }
+        stage('Build') {
+            steps {
+                bat 'mvn clean install' // Adjust as needed for your project
+                echo '============================== Build Sucess =============================='
             }
         }
         
-        // stage('Security Scan') {
-        //     steps {
-        //         script {
-        //             // Run a security scan for sensitive data
-        //             echo 'Running security scan...'
-                    
-        //             // Example of running a security scan using a hypothetical tool
-        //             // Adjust the command according to your specific security tool
-        //             bat 'git-secrets --scan' // Replace with your actual security scan command
-                    
-        //             // If using a specific security tool that requires installation, make sure it's available in the PATH or install it beforehand.
-        //         }
-        //     }
-        // }
-        
-        stage('Deploy to VPS') {
+        stage('Upload Jar File') {
             steps {
                 script {
-                    // Set environment variables for SSH and deployment
-                    def sshHost = "103.168.18.176"
-                    def sshUser = "root"
-                    def remoteDir = "/system/projects/java/chavdar_vishranti/jars/config-server"
-                    def sshKey = credentials('ssh-private-key-id') // Assuming you have a Jenkins credential for the SSH key
-
-                    // // Install SSH and SCP tools
-                    // echo 'Installing SSH and SCP...'
-                    // bat 'apt-get update && apt-get install -y openssh-client'
-
-                    // Build the project
-                    echo 'Starting build and deployment...'
-                    bat 'mvn clean install'
-
-                    // Find the JAR file
-                    def jarFile = bat(script: 'for %%f in (target/*.jar) do @echo %%f', returnStdout: true).trim()
+                    def jarFile = bat(script: 'for %%f in (target\\*.jar) do @echo %%f', returnStdout: true).trim()
                     echo "Found JAR file: ${jarFile}"
-
-                    // Set up SSH key
-                    echo 'Setting up SSH key...'
-                    writeFile file: 'id_rsa', text: sshKey
-                    bat 'chmod 600 id_rsa'
-                    bat 'move id_rsa ~/.ssh/id_rsa'
-
-                    // Test SSH connection
-                    echo 'Testing SSH connection...'
-                    bat "ssh -o StrictHostKeyChecking=no ${sshUser}@${sshHost} \"echo 'SSH connection successful'\""
-
-                    // Copy JAR file to VPS
-                    echo 'Copying JAR file to VPS...'
-                    bat "scp -o StrictHostKeyChecking=no ${jarFile} ${sshUser}@${sshHost}:${remoteDir}"
-                    echo 'Copied JAR file to VPS successfully...!!!'
-
-                    // Run the JAR on the VPS
-                    echo 'Starting Eureka Server on VPS...'
-                    bat """
-                        ssh -o StrictHostKeyChecking=no ${sshUser}@${sshHost} "nohup java -jar ${remoteDir}/\$(basename ${jarFile}) > /dev/null 2>&1 &"
-                    """                    
-                    echo 'Config Server started successfully ...!!!'
+                    echo '============================== Jar file getting Successfully...!!! ============================== '
+        
+                    def jarFileBasename = jarFile.replace('\\', '/').replace('C:', '/mnt/c').split('/').last()
+                    def workspacePath = WORKSPACE.replace('\\', '/')
+                    
+                    def jarRemoveScript = """
+                    pkill -f ${jarFileBasename} || echo 'No running process found for ${jarFileBasename}'
+                    echo 'Jar file Process Killed...!!!'
+                    rm -f ${VPS_APP_DIR}/*.jar
+                    echo '============================== Old Jar files removed...!!!'
+                    """
+                    
+                    echo '============================== Previous Jar Remove operation Successfully...!!! =============================='
+        
+                    def uploadCmd = """
+                    scp -i ${SSH_KEY} ${workspacePath}/target/${jarFileBasename} ${VPS_USER}@${VPS_HOST}:${VPS_APP_DIR}/
+                    """
+                    bat uploadCmd
+                    echo '============================== New JAR file uploaded Successfully...!!! ============================== '
                 }
             }
         }
         
-        
+        stage('Deploy Jar File') {
+            steps {
+                script {
+                    def jarFile = 'config-server-0.0.1-SNAPSHOT.jar' // Replace with your actual JAR file name
+
+                    echo 'Executing deployment script...'
+                    def sshCommand = """ssh -i ${env.SSH_KEY} ${env.VPS_USER}@${env.VPS_HOST} "nohup java -jar ${env.VPS_APP_DIR}/${env.JAR_FILE} > ${env.VPS_APP_DIR}/app.log 2>&1 & echo 'New JAR file deployed and running...!!!'" """
+                    bat(script: sshCommand)
+                    
+                    echo '============================== New JAR file Deployed Successfully...!!! ============================== '
+                }
+            }
+        }
     }
 
     post {
-        always {
-            // Clean workspace after the build
-            cleanWs()
+        success {
+            echo 'Deployment completed successfully!'
+        }
+        failure {
+            echo 'Deployment failed.'
         }
     }
 }
