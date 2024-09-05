@@ -1,0 +1,188 @@
+Sure! Here's the updated `login-api.yml` file that includes your provided components (`AuthRequest`, `AuthResponse`, `ErrorResponse`) and integrates them into the appropriate places. This version now uses the `AuthRequest` and `AuthResponse` components in the authentication paths, making the structure cleaner and more reusable.
+
+### Updated `login-api.yml`:
+
+```yaml
+openapi: 3.0.3
+info:
+  title: CV Auth Service API
+  description: API for Authentication Service that provides login functionality and returns JWT tokens.
+  version: 1.0.0
+  contact:
+    name: Support Team
+    email: support@chavdarvishranti.com
+servers:
+  - url: http://localhost:8063
+    description: Local server
+  - url: http://103.168.18.176:8063
+    description: Production server
+
+paths:
+  /auth/login:
+    post:
+      summary: Login and get JWT token
+      description: Authenticate the user with username and password, and return a JWT token.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthRequest'
+      responses:
+        '200':
+          description: Successfully authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Unauthorized - invalid username or password
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '400':
+          description: Bad request - invalid input format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/register:
+    post:
+      summary: Register a new user
+      description: Register a new user with username, password, and email.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: owner@chavdarvishranti.com
+                  description: The username (email) of the user.
+                password:
+                  type: string
+                  example: "ownerpassword123"
+                  description: The user's password.
+                name:
+                  type: string
+                  example: "Sharad Chavhan"
+                  description: The user's full name.
+            required:
+              - username
+              - password
+              - name
+      responses:
+        '201':
+          description: User registered successfully
+        '400':
+          description: Bad request - invalid input format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Conflict - user already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    AuthRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          example: "sharad@example.com"
+        password:
+          type: string
+          example: "password123"
+      required:
+        - username
+        - password
+
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiJ9..."
+
+    ErrorResponse:
+      type: object
+      properties:
+        status:
+          type: integer
+          example: 401
+        message:
+          type: string
+          example: "Invalid username or password"
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Auth
+    description: Authentication related endpoints
+```
+
+### Key Changes:
+1. **AuthRequest Component**:
+   - Replaces inline request bodies for `/auth/login` with a reusable `AuthRequest` schema. It includes `username` and `password` as required fields.
+
+2. **AuthResponse Component**:
+   - Used for a successful response from the `/auth/login` endpoint. It includes a `token` field that contains the JWT token.
+
+3. **ErrorResponse Component**:
+   - Simplified to contain `status` and `message` fields, and used across various error responses (401, 400, 500, etc.).
+
+4. **Security Scheme**:
+   - `bearerAuth` is defined under `components/securitySchemes`, which uses the Bearer token format (JWT).
+
+### Example for `AuthRequest`:
+```json
+{
+  "username": "sharad@example.com",
+  "password": "password123"
+}
+```
+
+### Example for `AuthResponse`:
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiJ9..."
+}
+```
+
+### Example for `ErrorResponse`:
+```json
+{
+  "status": 401,
+  "message": "Invalid username or password"
+}
+```
+
+With these changes, your OpenAPI specification is more modular, reusable, and easier to maintain across various endpoints.
