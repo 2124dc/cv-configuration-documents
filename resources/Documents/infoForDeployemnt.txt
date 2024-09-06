@@ -7,3 +7,11 @@ git repo : https://sharadchavhan001@bitbucket.org/java-by-2124/cv-config-server.
 
 
 
+Secrets for GIT :
+
+VPS_SSH_HOST - 103.168.18.176
+VPS_SSH_USER - root
+VPS_REMOTE_DIR - /system/projects/java/chavdar_vishranti
+SSH_PRIVATE_KEY
+
+
