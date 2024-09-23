@@ -1,7 +1,7 @@
 To deploy multiple Spring Boot applications as standalone JAR files on localhost, you can follow these steps. Here, we'll cover the deployment of Eureka Server, Config Server, and API Gateway. For simplicity, we'll assume you have built each application into a JAR file.
 
 ### Prerequisites
-- Java 22 installed
+- Java 21 installed
 - Maven installed
 - Each application (Eureka Server, Config Server, API Gateway) built as a JAR file
 
